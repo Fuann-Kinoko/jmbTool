@@ -14,7 +14,7 @@ class JmkKind(Enum):
     US = auto()
 
 class BaseGdat(ABC):
-    def __init__(self, source : io.BufferedReader | str = None):
+    def __init__(self, source = None):
         self.fParams : list[stFontParam]
         self.tex : stTex
 
@@ -37,7 +37,7 @@ class BaseGdat(ABC):
         elif kind == JmkKind.US:
             return gDat_US(source)
         else:
-            assert(False and "unreachable")
+            assert False, "unreachable"
 
     @abstractmethod
     def read(self, fp):
@@ -48,6 +48,7 @@ class BaseGdat(ABC):
         pass
 
     def write_to_file(self, writepath: str, validation=True):
+        os.makedirs(os.path.dirname(writepath), exist_ok=True)
         with open(writepath, 'wb') as fp:
             self.write(fp, validation)
 
@@ -211,11 +212,11 @@ class gDat_US(BaseGdat):
             local_ctls.append(-2)
             while len(local_ctls) < jmbConst.US_JIMAKU_CHAR_MAX:
                 local_ctls.append(-1)
-            assert(len(local_ctls) == len(self.sentences[i]))
+            assert(len(local_ctls) == len(self.sentences[i].char_data))
 
             if validation_mode:
                 assert(self.sentences[i].valid_len() == len(local_sent))
-                for j, ctl in enumerate(self.sentences[i]):
+                for j, ctl in enumerate(self.sentences[i].char_data):
                     assert(ctl == local_ctls[j])
                 print("jmk correct", local_sent)
             else:
@@ -390,10 +391,6 @@ class gDat_JA(BaseGdat):
                         assert(ctl == local_ctls[k])
                     print("jmk correct", local_jmk)
                 else:
-                    # old = copy(self.sentences[i].jimaku_list[j].char_data)
                     self.sentences[i].jimaku_list[j].overwrite_ctl(local_ctls)
-                    # new = copy(self.sentences[i].jimaku_list[j].char_data)
-                    # for k, old_ctl in enumerate(old):
-                    #     assert(old_ctl == new[k])
-                # print("ori_ctl", jmbUtils.display_char_data(self.sentences[i].jimaku_list[j].char_data))
-                # print("translation_ctl:", local_ctls)
+
+gDat = Union[gDat_JA, gDat_US]

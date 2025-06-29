@@ -14,7 +14,14 @@ def display_char_data(lst: list[int]) -> list[int]:
 
     return lst[:first_neg2_index]
 
-def print_jmt_differences(original: list[list[str]], modified: list[list[str]]):
+def print_jmt_differences(original: list[list[str]]|None, modified: list[list[str]]):
+    if original is None:
+        for sent_idx, mod_sent in enumerate(modified):
+            for line_idx, mod_line in enumerate(mod_sent):
+                print(f"(*) DIFFERENCE at [{sent_idx},{line_idx}]:")
+                print(f"    Original: {'(not provided)'}")
+                print(f"    Modified: {mod_line or '(none)'}\n")
+        return
     any_difference = False
     for sent_idx in range(max(len(original), len(modified))):
         orig_sent = original[sent_idx] if sent_idx < len(original) else []

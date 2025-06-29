@@ -1,3 +1,4 @@
+from typing import Union
 import jmbConst
 import jmbUtils
 from dataclasses import dataclass
@@ -566,6 +567,9 @@ class texMeta:
     def load(self, filename):
         NotImplemented
 
+    def __repr__(self):
+        return (f"texMeta(w={self.w}, h={self.h}, dds_size={self.dds_size})")
+
 class stTex:
     def __init__(self, fp=None):
         self.header : texMeta
@@ -593,3 +597,7 @@ class stTex:
     def __repr__(self):
         # TODO: 更新repr
         return (f"stTex : len(header) = {len(self.header)}, len(dds) = {len(self.dds)}")
+
+
+stJimaku = Union[stJimaku_JA, stJimaku_US]
+MetaData = Union[MetaData_JA, MetaData_US]

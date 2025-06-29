@@ -1,6 +1,7 @@
 from enum import Enum, auto
-from jmbStruct import stFontParam, stJimaku_JA
-from jmbDefine import gDat_JA
+import os
+from typing import Union
+from jmbStruct import stFontParam, stJimaku
 import jmbUtils
 
 from wand.image import Image
@@ -14,6 +15,11 @@ Font_HiraginoMincho = "HiraginoMinCho-W6.ttc"
 SATSU_FLAG = 0x8000
 SHI_FLAG = 0x7000
 
+BODY_FACE_SCALE_SIZE = 57
+NAME_FACE_SCALE_SIZE = 34
+BODY_WIDTH_SCALE_SIZE = 35
+NAME_WIDTH_SCALE_SIZE = 28
+
 DEFAULT_FACE_SIZE = 142         # scale = 7.5
 KATA_FACE_SIZE = 112            # scale = 6
 KANA_FACE_SIZE = 104            # scale = 5.5
@@ -21,7 +27,9 @@ SPECIAL_FACE_SIZE = 188         # scale = 10
 NUM_FACE_SIZE = 142             # scale = 7.5
 QUOTE_FACE_SIZE = 142           # scale = 7.5
 
-DEFAULT_WIDTH = 35
+DEFAULT_HEIGHT = 57
+
+DEFAULT_WIDTH  = 35
 KATA_WIDTH  = 28
 KANA_WIDTH = 26
 SPECIAL_WIDTH = 47
@@ -36,42 +44,51 @@ class FontKind(Enum):
     NUM = auto()
     QUOTE = auto()
 
-    def get_face_size(self) -> int:
+    def get_face_size(self, for_name = False) -> int:
+        scale:float = 1.0
+        if for_name:
+            scale = NAME_FACE_SCALE_SIZE / BODY_FACE_SCALE_SIZE
         match self:
             case FontKind.KANA:
-                return KANA_FACE_SIZE
+                return int(scale * KANA_FACE_SIZE)
             case FontKind.KATA:
-                return KATA_FACE_SIZE
+                return int(scale * KATA_FACE_SIZE)
             case FontKind.KANJI:
-                return DEFAULT_FACE_SIZE
+                return int(scale * DEFAULT_FACE_SIZE)
             case FontKind.NUM:
-                return NUM_FACE_SIZE
+                return int(scale * NUM_FACE_SIZE)
             case FontKind.QUOTE:
-                return QUOTE_FACE_SIZE
+                return int(scale * QUOTE_FACE_SIZE)
             case FontKind.SPECIAL:
-                return SPECIAL_FACE_SIZE
+                return int(scale * SPECIAL_FACE_SIZE)
             case _:
                 NotImplemented
 
-    def get_width(self) -> int:
+    def get_width(self, for_name = False) -> int:
+        scale:float = 1.0
+        if for_name:
+            scale = NAME_FACE_SCALE_SIZE / BODY_FACE_SCALE_SIZE
         match self:
             case FontKind.KANA:
-                return KANA_WIDTH
+                return int(scale * KANA_WIDTH)
             case FontKind.KATA:
-                return KATA_WIDTH
+                return int(scale * KATA_WIDTH)
             case FontKind.KANJI:
-                return DEFAULT_WIDTH
+                return int(scale * DEFAULT_WIDTH)
             case FontKind.NUM:
-                return NUM_WIDTH
+                return int(scale * NUM_WIDTH)
             case FontKind.QUOTE:
-                return QUOTE_WIDTH
+                return int(scale * QUOTE_WIDTH)
             case FontKind.SPECIAL:
-                return SPECIAL_WIDTH
+                return int(scale * SPECIAL_WIDTH)
             case _:
                 NotImplemented
 
-    def get_height(self) -> int:
-        return 57
+    def get_height(self, for_name = False) -> int:
+        scale:float = 1.0
+        if for_name:
+            scale = NAME_FACE_SCALE_SIZE / BODY_FACE_SCALE_SIZE
+        return int(scale * DEFAULT_HEIGHT)
 
 
 def check_kind(char: str) -> FontKind:
@@ -106,10 +123,14 @@ def register(input: str) -> tuple[dict[int, str], dict[str, int], str]:
     char2ctl_dict = {}
     ctl2char_dict[-3] = " "
     char2ctl_dict[" "] = -3
+    ctl2char_dict[-4] = "　"
+    char2ctl_dict["　"] = -4
 
     for char in input:
-        if char == "、" or char == "。" or char == " ":
+        if char == "、" or char == "。":
             char2ctl_dict[char] = -3
+            continue
+        if char == " " or char == "　":
             continue
         if char not in char2ctl_dict:
             unique_jmk += char
@@ -128,21 +149,21 @@ def register(input: str) -> tuple[dict[int, str], dict[str, int], str]:
     return ctl2char_dict, char2ctl_dict, unique_jmk
 
 
-def gen_char_image(char: str, info: stFontParam = None) -> Image:
+def gen_char_image(char: str, info: stFontParam = None, for_name = False) -> Image:
     assert(len(char) == 1)
     kind = check_kind(char)
     if info is not None:
         img = Image(width=info.w*4, height=info.h*4, background=Color('transparent'))
     else:
-        img = Image(width=kind.get_width()*4, height=kind.get_height()*4, background=Color('transparent'))
+        img = Image(width=kind.get_width(for_name)*4, height=kind.get_height(for_name)*4, background=Color('transparent'))
 
     if kind == FontKind.QUOTE:
         if char == "“":
-            img = Image(filename="assets/quote_open.png")
+            img = Image(filename="assets/chars/JA_quote_open.png")
         elif char == "”":
-            img = Image(filename="assets/quote_close.png")
+            img = Image(filename="assets/chars/JA_quote_close.png")
         else:
-            assert(False and "Unreachable")
+            assert False, "Unreachable"
         return img
 
     if kind == FontKind.KANJI and char != "？":
@@ -155,62 +176,85 @@ def gen_char_image(char: str, info: stFontParam = None) -> Image:
         color = Color('white'),
         # stroke_color=Color('#d4d4d4'),
         # stroke_width=1,
-        size = kind.get_face_size()
+        size = kind.get_face_size(for_name)
     )
     img.gravity = 'center'
 
     img.caption(text=char)
 
     if font_path is Font_SourceHan:
-        img.roll(y=-16)
+        OFFSET = -10 if for_name else -16
+        img.roll(y=OFFSET)
 
     return img
 
-def save_preview_jimaku(save_path: str, jimaku: stJimaku_JA, ctl2char_lookup: dict[int, str], fParams: list[stFontParam] = None):
+def save_preview_jimaku(
+        save_path: str,
+        jimaku: stJimaku,
+        ctl2char_lookup: dict[int, str] = None,
+        fParams: list[stFontParam] = None,
+        provided_chars_dir : str = None,
+        for_name = False
+    ):
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    should_gen_char : bool = (ctl2char_lookup is not None and fParams is None and provided_chars_dir is None)
+
+    HEIGHT = NAME_FACE_SCALE_SIZE if for_name else DEFAULT_HEIGHT
     char_data = jmbUtils.display_char_data(jimaku.char_data)
-    canvas = Image(width=35*4*2*len(char_data), height=57*4, background=Color('black'))
+    canvas = Image(width=35*4*2*len(char_data), height=HEIGHT*4, background=Color('black'))
+
     current_x = 0
     for i, ctl in enumerate(char_data):
-        char = ctl2char_lookup[ctl]
-        kind = check_kind(char)
-        if (fParams is not None) and (char != " "):
-            if (ctl != -3) and ((ctl & SHI_FLAG) or (ctl & SATSU_FLAG)):
-                index = ctl & 0x0fff
-            else:
-                index = ctl
-            char_info = fParams[index]
+        if should_gen_char:
+            char = ctl2char_lookup[ctl]
+            kind = check_kind(char)
+            char_info = stFontParam(u=0,v=0,w=kind.get_width(for_name),h=kind.get_height(for_name))
+            char_img = gen_char_image(char, char_info, for_name)
+            step = kind.get_width(for_name)
+            if kind in (FontKind.KANJI , FontKind.KATA , FontKind.NUM , FontKind.SPECIAL):
+                step += 1
         else:
-            char_info = stFontParam(u=0,v=0,w=kind.get_width(),h=kind.get_height())
+            if ctl == -3:
+                char_img = gen_char_image(" ")
+                step = 21
+            elif ctl == -4:
+                char_img = gen_char_image("　")
+                step = 21
+            else:
+                mask = 0x0fff if ((ctl & SHI_FLAG) or (ctl & SATSU_FLAG)) else 0xffff
+                index = ctl & mask
+                char_info = fParams[index]
+                char_img = Image(filename=f"{provided_chars_dir}/char_{index:02d}.png")
+                step = (char_img.width // 4)+1
         # print(f"ctl = {ctl}; char = {char}; Kind = {kind};\tparams = {char_info}")
-        char_img = gen_char_image(char, char_info)
+
         canvas.composite(char_img, left=current_x, top=0, operator='atop')
         char_img.close()
-
-        step = kind.get_width()
-        if kind in (FontKind.KANJI , FontKind.KATA , FontKind.NUM , FontKind.SPECIAL):
-            step += 1
         current_x += step*4
 
-    canvas.crop(0, 0, width=current_x + 16, height=57*4)
+    if should_gen_char:
+        canvas.crop(0, 0, width=current_x + 16, height=57*4)
+    else:
+        canvas.crop(0, 0, width=current_x + 16, height=fParams[0].h*4)
     canvas.format='png'
     canvas.save(filename=save_path)
     canvas.close()
 
-def save_char_image(save_path: str, char: str, info: stFontParam = None):
-    img = gen_char_image(char, info)
+def save_char_image(save_path: str, char: str, info: stFontParam = None, for_name = False):
+    img = gen_char_image(char, info, for_name)
     img.save(filename=save_path)
     img.close()
 
-def genFParams(unique_chars : str, max_width = 512) -> list[stFontParam]:
+def genFParams(unique_chars : str, max_width = 512, for_name = False) -> list[stFontParam]:
     ret_list : list[stFontParam] = []
-    HEIGHT = 57
+    HEIGHT = 34 if for_name else 57
     u = 0
     v = 0
     row_count = 0
     for char in unique_chars:
         kind = check_kind(char)
-        w = kind.get_width()
-        h = kind.get_height()
+        w = kind.get_width(for_name)
+        h = kind.get_height(for_name)
         step = w
         if kind in (FontKind.KANJI , FontKind.KATA , FontKind.NUM , FontKind.SPECIAL):
             step += 1

@@ -121,8 +121,8 @@ def reconstruction(input_dir : str, output_path : str, char_infos : list[stFontP
     except Exception as e:
         print(f"保存DDS失败: {e}")
 
-def gen(output_path: str, unique_chars: str, max_width=jmbConst.JIMAKU_TEX_WIDTH*4, fixed_max_width: bool = False):
-    HEIGHT = 57
+def gen(output_path: str, unique_chars: str, max_width: int = jmbConst.JIMAKU_TEX_WIDTH*4, fixed_max_width: bool = False, for_name: bool = False):
+    HEIGHT = 34 if for_name else 57
     canvas_width = max_width
     canvas_height = HEIGHT * 4 * 10
 
@@ -134,8 +134,8 @@ def gen(output_path: str, unique_chars: str, max_width=jmbConst.JIMAKU_TEX_WIDTH
     current_max_width = 0
     for char in unique_chars:
         kind = fontTool.check_kind(char)
-        w = kind.get_width()
-        h = kind.get_height()
+        w = kind.get_width(for_name)
+        h = kind.get_height(for_name)
         assert(h == HEIGHT)
         step = w
         if kind in (fontTool.FontKind.KANJI , fontTool.FontKind.KATA , fontTool.FontKind.NUM , fontTool.FontKind.SPECIAL):
@@ -146,7 +146,7 @@ def gen(output_path: str, unique_chars: str, max_width=jmbConst.JIMAKU_TEX_WIDTH
             current_x = 0
             current_y += HEIGHT*4
 
-        char_img = fontTool.gen_char_image(char)
+        char_img = fontTool.gen_char_image(char, for_name=for_name)
         canvas.composite(char_img, left=current_x, top=current_y)
         char_img.close()
 
