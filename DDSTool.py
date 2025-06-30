@@ -145,9 +145,10 @@ def reconstruction(
 def gen(
     output_path: str,
     unique_chars: str,
+    usage: jmbConst.JmkUsage,
+
     max_width: int = jmbConst.JIMAKU_TEX_WIDTH*4,
     fixed_max_width: bool = False,
-    for_name: bool = False,
     original_alignment: bool = True
     ):
     """Generates a DDS texture atlas from unique characters with font rendering.
@@ -159,13 +160,15 @@ def gen(
     Args:
         output_path (str): Path to save the output DDS file (e.g., 'texture.dds')
         unique_chars (str): String containing unique characters to render in the atlas
+        usage (JmkUsage): uses corresponding font metrics.
+            1. Nameplate  (34px height).
+            2. Hato(Mail) (44px height).
+            3. Default    (57px height)
+
         max_width (int, optional): Maximum texture width in pixels. Defaults to 4x JIMAKU_TEX_WIDTH
         fixed_max_width (bool, optional):
             If True, forces output width to match max_width.
             If False, uses actual content width. Defaults to False.
-        for_name (bool, optional):
-            If True, uses nameplate font settings (34px height).
-            If False, uses standard font (57px height). Defaults to False.
         original_alignment (bool, optional):
             When True, mimics the original game's character spacing behavior which adds 1px
             extra spacing for Kanji, Kana, Numeric, and Special characters. This implementation
@@ -180,9 +183,15 @@ def gen(
             Defaults to True (a replication of original behavior).
             But recommended to be False.
     """
-    HEIGHT = 34 if for_name else 57
+    match usage:
+        case jmbConst.JmkUsage.Name:
+            HEIGHT = 34
+        case jmbConst.JmkUsage.Hato:
+            HEIGHT = 44
+        case _:
+            HEIGHT = 57
     canvas_width = max_width
-    canvas_height = HEIGHT * 4 * 10
+    canvas_height = HEIGHT * 4 * (len(unique_chars) // 8)
 
     canvas = Image(width=canvas_width, height=canvas_height, background=Color('transparent'))
 
@@ -192,8 +201,8 @@ def gen(
     current_max_width = 0
     for char in unique_chars:
         kind = fontTool.check_kind(char)
-        w = kind.get_width(for_name)
-        h = kind.get_height(for_name)
+        w = kind.get_width(usage, alpha_ch=char)
+        h = kind.get_height(usage, alpha_ch=char)
         assert(h == HEIGHT)
         step = w
         if original_alignment and kind in (fontTool.FontKind.KANJI , fontTool.FontKind.KATA , fontTool.FontKind.NUM , fontTool.FontKind.SPECIAL):
@@ -204,7 +213,7 @@ def gen(
             current_x = 0
             current_y += HEIGHT*4
 
-        char_img = fontTool.gen_char_image(char, for_name=for_name)
+        char_img = fontTool.gen_char_image(char, usage)
         canvas.composite(char_img, left=current_x, top=current_y)
         char_img.close()
 

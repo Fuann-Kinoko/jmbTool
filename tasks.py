@@ -3,6 +3,7 @@ import os
 import fontTool
 import DDSTool
 import jmbUtils
+import jmbConst
 from jmbData import BaseGdat, JmkKind, gDat, gDat_JA
 
 from copy import copy, deepcopy
@@ -108,11 +109,11 @@ def TaskUpdateTex(self:JMBBaseTask):
         check_raw_text_prepared(self.context)
     dds_path: str = self.params.get('import_path', 'gen.dds')
     unique_chars = self.context.get('unique_chars')
-    for_name = self.context.get('jmb_nmType', False)
+    usage = self.context.get('jmb_usage', 0)
     print("\n==== Generate DDS Tex Based on used chars ====")
 
     if not import_from_file:
-        DDSTool.gen(dds_path, unique_chars, fixed_max_width=False, for_name = for_name, original_alignment=False)
+        DDSTool.gen(dds_path, unique_chars, usage, fixed_max_width=False, original_alignment=False)
     self.jmb.reimport_tex(dds_path)
 
 @basicTask
@@ -132,7 +133,7 @@ def TaskGeneratePreview(self:JMBBaseTask):
     depends_on_dds_extraction : bool = (extracted_chars_dir != "")
     preview_dir = self.params.get('preview_dir', 'jmks')
     ctl2char_lookup = self.context.get('ctl2char_lookup', None)
-    for_name = self.context.get('jmb_nmType', False)
+    usage = self.context.get('jmb_usage', 0)
     if not depends_on_dds_extraction:
         check_raw_text_prepared(self.context)
     print("\n==== Generating Previews ====")
@@ -144,23 +145,24 @@ def TaskGeneratePreview(self:JMBBaseTask):
         if isinstance(self.jmb, gDat_JA):
             for jmk_idx, jmk in enumerate(sent.jimaku_list):
                 if not jmk.valid():
+                    print(f"\thas {jmk_idx} valid jimakus")
                     break
                 # print("\t char_data:", len(jmk.char_data), jmk.char_data)
                 # print("\t rubi_data:", len(jmk.rubi_data), jmk.rubi_data)
                 target_path = f"{preview_dir}/JA_sent{i}/{jmk_idx:02d}"
                 # jmk.dump(target_path)
                 if depends_on_dds_extraction:
-                    fontTool.save_preview_jimaku(target_path+".png", jmk, fParams=self.jmb.fParams, provided_chars_dir=extracted_chars_dir, for_name=for_name)
+                    fontTool.save_preview_jimaku(target_path+".png", jmk, usage, fParams=self.jmb.fParams, provided_chars_dir=extracted_chars_dir)
                 else:
-                    fontTool.save_preview_jimaku(target_path+".png", jmk, ctl2char_lookup, for_name=for_name, original_alignment=False)
+                    fontTool.save_preview_jimaku(target_path+".png", jmk, usage, ctl2char_lookup, original_alignment=False)
         else:
             if not sent.valid():
                 break
             target_path = f"{preview_dir}/US_sent{i}"
             if depends_on_dds_extraction:
-                fontTool.save_preview_jimaku(target_path+".png", sent, fParams=self.jmb.fParams, provided_chars_dir=extracted_chars_dir, for_name=for_name)
+                fontTool.save_preview_jimaku(target_path+".png", sent, usage, fParams=self.jmb.fParams, provided_chars_dir=extracted_chars_dir)
             else:
-                fontTool.save_preview_jimaku(target_path+".png", sent, ctl2char_lookup, for_name=for_name, original_alignment=False)
+                fontTool.save_preview_jimaku(target_path+".png", sent, usage, ctl2char_lookup, original_alignment=False)
 
 
 @basicTask
@@ -272,9 +274,7 @@ def TaskSave(self:JMBBaseTask):
             Path where the modified JMB file will be saved.
             Default: 'testmod.jmb'
     """
-    default_output_dir = "JMBS/"
-    if self.context.get('jmb_zanType'):
-        default_output_dir += "Zan/"
+    default_output_dir = "JMBS/" + self.context.get('jmb_output_prefix', "")
     jmb_name = self.context['jmb_name']
     output_path = self.params.get('output_path', default_output_dir + f'{jmb_name}.jmb')
     print("\n==== Saving Modified File ====")
@@ -287,12 +287,10 @@ def TaskTranslation(self:JMBBaseTask):
     """
     修改一部分文字
     """
-    translation_dir = "assets/translation/"
-    if self.context.get('jmb_zanType'):
-        translation_dir += "Zan/"
+    translation_dir = "assets/translation/" + self.context.get('jmb_output_prefix', "")
     default_path = translation_dir + self.context['jmb_name'] + ".json"
     translation_filepath = self.context.get('translation', default_path)
-    for_name = self.context.get('jmb_nmType', False)
+    usage = self.context.get('jmb_usage', 0)
     assert(os.path.exists(translation_filepath))
     f = open(translation_filepath, 'r', encoding='utf-8')
     translation = json.load(f)
@@ -311,7 +309,9 @@ def TaskTranslation(self:JMBBaseTask):
         'unique_chars': unique_chars
     })
 
-    self.jmb.fParams = fontTool.genFParams(unique_chars, for_name=for_name, original_alignment=False)
+    print(f'translation updated; unique_chars = "{unique_chars}"')
+
+    self.jmb.fParams = fontTool.genFParams(unique_chars, usage, original_alignment=False)
     self.jmb.update_sentence_ctl(translation, char2ctl_lookup, validation_mode=False)
 
 
@@ -322,10 +322,21 @@ def run_tasks(input_path:str, tasks:list[type], **task_args):
     jmb_name = jmb_file[:-4]
     task_args['jmb_file'] = jmb_file
     task_args['jmb_name'] = jmb_name
-    task_args['jmb_nmType'] = 'nm' in jmb_name
-    task_args['jmb_zanType'] = 'Zan' in input_path
-    kind: JmkKind = JmkKind.JA if ('J' in jmb_name) else JmkKind.US
 
+    usage = jmbConst.JmkUsage.Default
+    if 'nm' in jmb_name:
+        assert usage == jmbConst.JmkUsage.Default
+        usage = jmbConst.JmkUsage.Name
+    if 'hato' in jmb_name:
+        assert usage == jmbConst.JmkUsage.Default
+        usage = jmbConst.JmkUsage.Hato
+    task_args['jmb_usage'] = usage
+
+    if 'Zan' in input_path:
+        task_args['jmb_output_prefix'] = 'Zan/'
+    if 'hato' in jmb_name:
+        task_args['jmb_output_prefix'] = 'hato/'
+    kind: JmkKind = JmkKind.JA if ('J' in jmb_name) else JmkKind.US
     print(f"\n==== Running Task on {jmb_file} ({kind}) ====")
     jmb = BaseGdat.create(input_path, kind)
 
@@ -368,9 +379,9 @@ if __name__ == '__main__':
         # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020103/00020103/00020103J.jmb",
         # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020103/00020103/00020103nmJ.jmb",
 
-        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0071010/0071010J.jmb",
+        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0071010/0071010J.jmb",
 
-        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/hato007201J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/hato007201J.jmb",
 
         # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020301/00020301/00020301J.jmb",
         # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020707/00020707/00020707J.jmb",
@@ -439,16 +450,22 @@ if __name__ == '__main__':
         TaskWrapper(TaskUpdateTex, import_from_file = False),
         TaskWrapper(TaskGeneratePreview, preview_dir="jmks"),
     ]
-    tasks_save_translation = tasks_test_translation + [TaskSave]
+    tasks_save_translation = [
+        TaskValidation,
+        TaskTranslation,
+        TaskWrapper(TaskUpdateTex, import_from_file = False),
+        # TaskWrapper(TaskGeneratePreview, preview_dir="jmks"),
+        TaskSave
+    ]
 
     custom = [
-        # TaskValidation,
-        # TaskPrintFParams,
-        TaskFlushFParams,
-        TaskWrapper(TaskUpdateTex, import_from_file = False),
-        TaskWrapper(TaskDumpDDSTex, dump_path="DDS_mod.dds"),
-        TaskWrapper(TaskExtractChars, extracted_dir="modded_dds_font"),
-        TaskWrapper(TaskGeneratePreview, preview_dir="jmks"),
+        TaskValidation,
+        TaskPrintFParams,
+        # TaskFlushFParams,
+        # TaskWrapper(TaskUpdateTex, import_from_file = False),
+        # TaskWrapper(TaskDumpDDSTex, dump_path="DDS_mod.dds"),
+        # TaskWrapper(TaskExtractChars, extracted_dir="modded_dds_font"),
+        # TaskWrapper(TaskGeneratePreview, preview_dir="jmks"),
     ]
 
     for file in files:
@@ -463,9 +480,9 @@ if __name__ == '__main__':
             input_path = file,
 
             # NOTE: switch between these sets or create your own stuff
-            tasks = tasks_preview_content,
+            # tasks = tasks_preview_content,
             # tasks = tasks_test_translation,
-            # tasks = tasks_save_translation,
+            tasks = tasks_save_translation,
             # tasks = custom,
 
             provided_text=jmb_text,
