@@ -260,8 +260,11 @@ def TaskSave(self:JMBBaseTask):
             Path where the modified JMB file will be saved.
             Default: 'testmod.jmb'
     """
+    default_output_dir = "JMBS/"
+    if self.context.get('jmb_zanType'):
+        default_output_dir += "Zan/"
     jmb_name = self.context['jmb_name']
-    output_path = self.params.get('output_path', f'JMBS/{jmb_name}.jmb')
+    output_path = self.params.get('output_path', default_output_dir + f'{jmb_name}.jmb')
     print("\n==== Saving Modified File ====")
 
     self.jmb.write_to_file(output_path)
@@ -272,7 +275,10 @@ def TaskTranslation(self:JMBBaseTask):
     """
     修改一部分文字
     """
-    default_path = "assets/translation/" + self.context['jmb_name'] + ".json"
+    translation_dir = "assets/translation/"
+    if self.context.get('jmb_zanType'):
+        translation_dir += "Zan/"
+    default_path = translation_dir + self.context['jmb_name'] + ".json"
     translation_filepath = self.context.get('translation', default_path)
     for_name = self.context.get('jmb_nmType', False)
     assert(os.path.exists(translation_filepath))
@@ -305,6 +311,7 @@ def run_tasks(input_path:str, tasks:list[type], **task_args):
     task_args['jmb_file'] = jmb_file
     task_args['jmb_name'] = jmb_name
     task_args['jmb_nmType'] = 'nm' in jmb_name
+    task_args['jmb_zanType'] = 'Zan' in input_path
     kind: JmkKind = JmkKind.JA if ('J' in jmb_name) else JmkKind.US
 
     print(f"\n==== Running Task on {jmb_file} ({kind}) ====")
@@ -344,9 +351,12 @@ def run_tasks(input_path:str, tasks:list[type], **task_args):
 if __name__ == '__main__':
     files = [
         # JA
-        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00010101/00010101/00010101J.jmb",
-        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00010101/00010101/00010101nmJ.jmb",
+        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00010101/00010101/00010101J.jmb",
+        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00010101/00010101/00010101nmJ.jmb",
         # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020103/00020103/00020103J.jmb",
+        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020103/00020103/00020103nmJ.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0071010/0071010J.jmb",
+
         # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020301/00020301/00020301J.jmb",
         # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020707/00020707/00020707J.jmb",
         # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020709/00020709/00020709J.jmb",
@@ -402,6 +412,20 @@ if __name__ == '__main__':
         # TaskWrapper(TaskSave, output_path="testmod.jmb"),
     ]
 
+    tasks_preview_content = [
+        TaskValidation,
+        TaskWrapper(TaskExtractChars, extracted_dir="dds_font"),
+        TaskWrapper(TaskDumpDDSTex, dump_path="DDS_ori.dds"),
+        TaskWrapper(TaskGeneratePreview, preview_dir="jmks", extracted_chars_dir = "dds_font"),
+    ]
+    tasks_test_translation = [
+        TaskValidation,
+        TaskTranslation,
+        TaskWrapper(TaskUpdateTex, import_from_file = False),
+        TaskWrapper(TaskGeneratePreview, preview_dir="jmks"),
+    ]
+    tasks_save_translation = deepcopy(tasks_test_translation)
+    tasks_save_translation.append(TaskSave)
 
     for file in files:
         jmb_text = None
@@ -412,8 +436,12 @@ if __name__ == '__main__':
             f.close()
 
         run_tasks(
-            file,
-            tasks,
+            input_path = file,
+
+            # NOTE: switch between these sets or create your own stuff
+            # tasks = tasks_preview_content,
+            # tasks = tasks_test_translation,
+            tasks = tasks_save_translation,
 
             provided_text=jmb_text,
         )
