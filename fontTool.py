@@ -194,8 +194,30 @@ def save_preview_jimaku(
         ctl2char_lookup: dict[int, str] = None,
         fParams: list[stFontParam] = None,
         provided_chars_dir : str = None,
-        for_name = False
+        for_name = False,
+        original_alignment = True
     ):
+    """Generates and saves a preview image of subtitle text (jimaku) using either character generation
+    or pre-extracted character images.
+
+    This function supports two modes of operation:
+    1. Character generation mode (when `ctl2char_lookup` is provided)
+    2. Pre-extracted character mode (when `fParams` and `provided_chars_dir` are provided)
+
+    Args:
+        save_path (str): Path to save the output preview image (PNG format)
+        jimaku (stJimaku): Subtitle data structure containing character control codes
+        ctl2char_lookup (dict[int, str], optional): Mapping of control codes to actual characters.
+            Required for character generation mode.
+        fParams (list[stFontParam], optional): List of font parameters for pre-extracted characters.
+            Required for pre-extracted mode.
+        provided_chars_dir (str, optional): Directory containing pre-extracted character images.
+            Required for pre-extracted mode.
+        for_name (bool, optional): If True, uses nameplate font settings. Defaults to False.
+        original_alignment (bool, optional): If True, tries to mimic original game's character spacing
+            behavior (adds 1px for certain character types, which is confusing and hard to predict).
+            Defaults to True. But recommended to be False.
+    """
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     should_gen_char : bool = (ctl2char_lookup is not None and fParams is None and provided_chars_dir is None)
 
@@ -211,7 +233,7 @@ def save_preview_jimaku(
             char_info = stFontParam(u=0,v=0,w=kind.get_width(for_name),h=kind.get_height(for_name))
             char_img = gen_char_image(char, char_info, for_name)
             step = kind.get_width(for_name)
-            if kind in (FontKind.KANJI , FontKind.KATA , FontKind.NUM , FontKind.SPECIAL):
+            if original_alignment and kind in (FontKind.KANJI , FontKind.KATA , FontKind.NUM , FontKind.SPECIAL):
                 step += 1
         else:
             if ctl == -3:
@@ -245,7 +267,39 @@ def save_char_image(save_path: str, char: str, info: stFontParam = None, for_nam
     img.save(filename=save_path)
     img.close()
 
-def genFParams(unique_chars : str, max_width = 512, for_name = False) -> list[stFontParam]:
+def genFParams(
+    unique_chars : str,
+    max_width = 512,
+    for_name = False,
+    original_alignment = True
+) -> list[stFontParam]:
+    """Generates a list of font parameters (stFontParam) for character atlas layout.
+
+    Calculates texture coordinates and dimensions for each character in a virtual texture atlas,
+    automatically handling line wrapping when characters exceed max_width.
+
+    Args:
+        unique_chars (str): String containing unique characters to be laid out in the atlas
+        max_width (int, optional): Maximum width of the virtual texture in pixels.
+            Characters will wrap to new line when exceeding this width. Defaults to 512.
+        for_name (bool, optional): If True, uses nameplate font metrics (34px height).
+            If False, uses standard font metrics (57px height). Defaults to False.
+        original_alignment (bool, optional): If True, adds 1px spacing to certain character types
+            (Kanji, Katakana, Numeric, Special) to mimic original game behavior. You don't need
+            this if the DDS texture isn't the original one.
+
+            Note: While this option exists for validation/accuracy purposes, in practice
+            1. If the DDS generation is also using the simpler (not original) alignment calculation,
+            there's no difference in gameplay.
+            2. A simpler alignment system (where param[i+1].u = param[i].u+param[i].w)
+                would be more maintainable and equally effective
+
+            Defaults to True.
+            But recommended to be False.
+
+    Returns:
+        list[stFontParam]: List of font parameters
+    """
     ret_list : list[stFontParam] = []
     HEIGHT = 34 if for_name else 57
     u = 0
@@ -256,7 +310,7 @@ def genFParams(unique_chars : str, max_width = 512, for_name = False) -> list[st
         w = kind.get_width(for_name)
         h = kind.get_height(for_name)
         step = w
-        if kind in (FontKind.KANJI , FontKind.KATA , FontKind.NUM , FontKind.SPECIAL):
+        if original_alignment and kind in (FontKind.KANJI , FontKind.KATA , FontKind.NUM , FontKind.SPECIAL):
             step += 1
 
         if u + step >= max_width:

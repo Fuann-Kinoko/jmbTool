@@ -222,6 +222,10 @@ class gDat_US(BaseGdat):
             else:
                 self.sentences[i].overwrite_ctl(local_ctls)
 
+    def flush_fparams(self):
+        NotImplemented
+        assert len(self.fParams) > 0
+
 class gDat_JA(BaseGdat):
     def __init__(self, fp = None):
         self.meta : MetaData_JA = None
@@ -392,5 +396,17 @@ class gDat_JA(BaseGdat):
                     print("jmk correct", local_jmk)
                 else:
                     self.sentences[i].jimaku_list[j].overwrite_ctl(local_ctls)
+
+    def flush_fparams(self):
+        assert len(self.fParams) > 0
+        cur_u = 0
+        for param in self.fParams:
+            if cur_u < param.u:
+                param.u = cur_u
+            elif param.u == 0:
+                cur_u = 0
+            # u=0 w=10, cur_u = 0
+            # u=11, w=10 cur_uu = 11
+            cur_u += param.w
 
 gDat = Union[gDat_JA, gDat_US]

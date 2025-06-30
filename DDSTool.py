@@ -9,6 +9,20 @@ from wand.display import display
 from wand.color import Color
 
 def extract(output_dir : str, dds_bytes : bytes, char_infos : list[stFontParam], scale_factor=4, should_store = False):
+    """Extracts individual character images from a DDS font texture atlas.
+
+    Processes a DDS texture containing font glyphs, cropping out each character
+    based on provided fParams. Optionally saves each character as separate PNG files.
+
+    Args:
+        output_dir (str): Directory to store extracted character images (created if not exists)
+        dds_bytes (bytes): Binary data of the DDS texture file
+        char_infos (list[stFontParam]): List of character metadata
+        scale_factor (int, optional): Multiplier for converting between DDS Canvas and fParas
+            pixels. Defaults to 4 (for 4x upscaled textures).
+        should_store (bool, optional): Whether to save individual character images as PNGs.
+            If False, only performs bounds checking. Defaults to False.
+    """
     os.makedirs(output_dir, exist_ok=True)
     char_image_cnt = 0
     with Image(blob=dds_bytes) as img:
@@ -33,7 +47,14 @@ def extract(output_dir : str, dds_bytes : bytes, char_infos : list[stFontParam],
 
     print(f"成功提取 {char_image_cnt} 个字符图像")
 
-def reconstruction(input_dir : str, output_path : str, char_infos : list[stFontParam], max_width=jmbConst.JIMAKU_TEX_WIDTH*4, fixed_max_width: bool = False):
+def reconstruction(
+        input_dir : str,
+        output_path : str,
+        char_infos : list[stFontParam],
+        max_width=jmbConst.JIMAKU_TEX_WIDTH*4,
+        fixed_max_width = False,
+        original_alignment = True
+    ):
     char_images = []
     for i in range(len(char_infos)):
         img_path = os.path.join(input_dir, f"char_{i:02d}.png")
@@ -69,7 +90,7 @@ def reconstruction(input_dir : str, output_path : str, char_infos : list[stFontP
         assert(w*4 == char_img.width)
         assert(h*4 == char_img.height)
         step = w
-        if w in {35 , 28 , 21 , 47}:
+        if original_alignment and w in {35 , 28 , 21 , 47}:
             step += 1
 
         # 检查是否需要换行
@@ -121,7 +142,44 @@ def reconstruction(input_dir : str, output_path : str, char_infos : list[stFontP
     except Exception as e:
         print(f"保存DDS失败: {e}")
 
-def gen(output_path: str, unique_chars: str, max_width: int = jmbConst.JIMAKU_TEX_WIDTH*4, fixed_max_width: bool = False, for_name: bool = False):
+def gen(
+    output_path: str,
+    unique_chars: str,
+    max_width: int = jmbConst.JIMAKU_TEX_WIDTH*4,
+    fixed_max_width: bool = False,
+    for_name: bool = False,
+    original_alignment: bool = True
+    ):
+    """Generates a DDS texture atlas from unique characters with font rendering.
+
+    Creates a texture atlas containing all input characters rendered using the font tool,
+    then converts it to BC7-compressed DDS format. The layout automatically wraps characters
+    based on max width constraints.
+
+    Args:
+        output_path (str): Path to save the output DDS file (e.g., 'texture.dds')
+        unique_chars (str): String containing unique characters to render in the atlas
+        max_width (int, optional): Maximum texture width in pixels. Defaults to 4x JIMAKU_TEX_WIDTH
+        fixed_max_width (bool, optional):
+            If True, forces output width to match max_width.
+            If False, uses actual content width. Defaults to False.
+        for_name (bool, optional):
+            If True, uses nameplate font settings (34px height).
+            If False, uses standard font (57px height). Defaults to False.
+        original_alignment (bool, optional):
+            When True, mimics the original game's character spacing behavior which adds 1px
+            extra spacing for Kanji, Kana, Numeric, and Special characters. This implementation
+            tries to match the original game's (somewhat unusual) text rendering logic.
+
+            Note: While this option exists for validation/accuracy purposes, in practice
+            1. If the fparams generation is also using the simpler (not original) alignment calculation,
+            there's no difference in gameplay.
+            2. A simpler alignment system (where param[i+1].u = param[i].u+param[i].w)
+                would be more maintainable and equally effective
+
+            Defaults to True (a replication of original behavior).
+            But recommended to be False.
+    """
     HEIGHT = 34 if for_name else 57
     canvas_width = max_width
     canvas_height = HEIGHT * 4 * 10
@@ -138,7 +196,7 @@ def gen(output_path: str, unique_chars: str, max_width: int = jmbConst.JIMAKU_TE
         h = kind.get_height(for_name)
         assert(h == HEIGHT)
         step = w
-        if kind in (fontTool.FontKind.KANJI , fontTool.FontKind.KATA , fontTool.FontKind.NUM , fontTool.FontKind.SPECIAL):
+        if original_alignment and kind in (fontTool.FontKind.KANJI , fontTool.FontKind.KATA , fontTool.FontKind.NUM , fontTool.FontKind.SPECIAL):
             step += 1
 
         if current_x + step*4 >= max_width:
