@@ -30,3 +30,5 @@ Entry Point:
 ```sh
 python tasks.py
 ```
+
+The `.BIN` file can be interpreted as a `stTex` struct (72-byte DDS header + DDS texture data), though this hasn't been thoroughly tested.

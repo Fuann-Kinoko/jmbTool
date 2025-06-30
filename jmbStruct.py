@@ -527,6 +527,8 @@ class stFontParam:
 class texMeta:
     def __init__(self, fp=None):
         self.STRUCT_SIZE = 72
+        self.magic = b'\x00'*4
+        self.idk = b'\x00'*4    #TODO: idk what it means
         self.w = 0              # u16, 2 bytes
         self.h = 0              # u16, 2 bytes
         self.dds_size = 0       # u32, 4 bytes
@@ -535,8 +537,15 @@ class texMeta:
 
     def read(self, fp):
         before = fp.tell()
-        assert(fp.read(4) == b'\x00'*4)
-        assert(fp.read(4) == b'\x06\x00\x00\x00')
+        self.magic = fp.read(4)
+        assert(self.magic == b'GCT0' or self.magic == b'\x00'*4)
+
+        self.idk = fp.read(4)
+        if self.magic == b'GCT0':
+            assert(self.idk == b'\x00'*4)
+        else:
+            assert(self.idk == b'\x06\x00\x00\x00')
+
         self.w = struct.unpack('<H', fp.read(2))[0]
         self.h = struct.unpack('<H', fp.read(2))[0]
         assert(fp.read(4) == b'\x00'*4)
@@ -549,8 +558,8 @@ class texMeta:
 
     def write(self, fp):
         before = fp.tell()
-        fp.write(b'\x00'*4)
-        fp.write(b'\x06\x00\x00\x00')
+        fp.write(self.magic)
+        fp.write(self.idk)
         fp.write(struct.pack('<H', self.w))
         fp.write(struct.pack('<H', self.h))
         fp.write(b'\x00'*4)
