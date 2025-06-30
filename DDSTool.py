@@ -198,6 +198,7 @@ def gen(
     current_x = 0
     current_y = 0
     row_count = 0
+    col_count = 0
     current_max_width = 0
     for char in unique_chars:
         kind = fontTool.check_kind(char)
@@ -210,14 +211,20 @@ def gen(
 
         if current_x + step*4 >= max_width:
             row_count += 1
+            col_count = 0
             current_x = 0
             current_y += HEIGHT*4
 
+        offset_y = 0
+        if usage == jmbConst.JmkUsage.Hato:
+            offset_y = - col_count
+
         char_img = fontTool.gen_char_image(char, usage)
-        canvas.composite(char_img, left=current_x, top=current_y)
+        canvas.composite(char_img, left=current_x, top=current_y+offset_y)
         char_img.close()
 
         current_x += step*4
+        col_count += 1
         if current_x > current_max_width:
             current_max_width = current_x
 
