@@ -76,7 +76,7 @@ def check_raw_text_prepared(ctx: dict):
 def TaskValidation(self:JMBBaseTask):
     """
     测试读取后，根据其生成的jmb是否能跟原文件一样
-    Validates that the generated JMB file matches the original file.
+    Validates that the loaded JMB file matches the original file.
 
     Parameters:
         None
@@ -124,6 +124,9 @@ def TaskGeneratePreview(self:JMBBaseTask):
     Parameters:
         preview_dir (str, required):
             Directory where preview images will be saved.
+        seperate_by_jmbname (bool, optional):
+            Whether the generated preview will be write into a seperate folder
+            Default: False
         extracted_chars_dir (str, optional):
             If provided, uses characters extracted from DDS instead of generating from font.
             When not provided, generates characters from font.
@@ -131,7 +134,11 @@ def TaskGeneratePreview(self:JMBBaseTask):
     """
     extracted_chars_dir = self.params.get('extracted_chars_dir', "")
     depends_on_dds_extraction : bool = (extracted_chars_dir != "")
+    seperate_by_jmbname : bool = self.params.get('seperate_by_jmbname', False)
     preview_dir = self.params.get('preview_dir', 'jmks')
+    if seperate_by_jmbname:
+        jmb_name = self.context['jmb_name']
+        preview_dir += f"/{jmb_name}"
     ctl2char_lookup = self.context.get('ctl2char_lookup', None)
     usage = self.context.get('jmb_usage', 0)
     if not depends_on_dds_extraction:
@@ -297,6 +304,7 @@ def TaskTranslation(self:JMBBaseTask):
     f.close()
     print("\n==== Modifying Translation ====")
 
+    translation = jmbUtils.translation_correction(translation, usage)
     jmbUtils.print_jmt_differences(self.context.get('provided_text'), translation)
 
     text_flatten = ''.join(t for s in translation for t in s)
@@ -324,7 +332,7 @@ def run_tasks(input_path:str, tasks:list[type], **task_args):
     task_args['jmb_name'] = jmb_name
 
     usage = jmbConst.JmkUsage.Default
-    if 'nm' in jmb_name:
+    if 'nm' in jmb_name or 'NM' in jmb_name:
         assert usage == jmbConst.JmkUsage.Default
         usage = jmbConst.JmkUsage.Name
     if 'hato' in jmb_name:
@@ -336,7 +344,17 @@ def run_tasks(input_path:str, tasks:list[type], **task_args):
         task_args['jmb_output_prefix'] = 'Zan/'
     if 'hato' in jmb_name:
         task_args['jmb_output_prefix'] = 'hato/'
-    kind: JmkKind = JmkKind.JA if ('J' in jmb_name) else JmkKind.US
+    if 'Movie' in input_path:
+        task_args['jmb_output_prefix'] = 'Movie/'
+    if 'fonts' in input_path and 'P' in jmb_name:
+        task_args['jmb_output_prefix'] = 'Panel/'
+    if 'fonts' in input_path and 'Stage' in jmb_name:
+        task_args['jmb_output_prefix'] = 'Stage/'
+    if 'fonts' in input_path and 'System' in jmb_name:
+        task_args['jmb_output_prefix'] = 'System/'
+    kind = JmkKind.US
+    if 'J' in jmb_name or ('Movie' in input_path and 'E' not in jmb_name):
+        kind: JmkKind = JmkKind.JA
     print(f"\n==== Running Task on {jmb_file} ({kind}) ====")
     jmb = BaseGdat.create(input_path, kind)
 
@@ -374,15 +392,11 @@ def run_tasks(input_path:str, tasks:list[type], **task_args):
 if __name__ == '__main__':
     files = [
         # JA
-        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00010101/00010101/00010101J.jmb",
-        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00010101/00010101/00010101nmJ.jmb",
-        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020103/00020103/00020103J.jmb",
-        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020103/00020103/00020103nmJ.jmb",
-
-        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0071010/0071010J.jmb",
-
-        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/hato007201J.jmb",
-
+        ## CharaGeki
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00010101/00010101/00010101J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00010101/00010101/00010101nmJ.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020103/00020103/00020103J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020103/00020103/00020103nmJ.jmb",
         # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020301/00020301/00020301J.jmb",
         # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020707/00020707/00020707J.jmb",
         # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020709/00020709/00020709J.jmb",
@@ -394,6 +408,38 @@ if __name__ == '__main__':
         # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/01070202/01070202/01070202J.jmb",
         # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/02010101/02010101/02010101J.jmb",
 
+        ## Zan
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0071010/0071010J.jmb",
+
+        ## Hato
+        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/hato007201J.jmb",
+
+        ## Movie
+        # "D:/SteamLibrary/steamapps/common/killer7/Movie/01010101/01010101.jmb",
+
+        ## Panel
+        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/P000304J.jmb",
+        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/P000501J.jmb",
+        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/P000603J.jmb",
+        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/P007201J.jmb",
+
+        ## Stage
+        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage771_M02J.jmb",
+        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage771_M02NMJ.jmb",
+        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage772_M02J.jmb",
+        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage772_M02NMJ.jmb",
+        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage772_M03J.jmb",
+        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage773_M02J.jmb",
+        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage773_M03NMJ.jmb",
+        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage773_M04J.jmb",
+        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage773_M05J.jmb",
+        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage774_M02J.jmb",
+        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage774_M02NMJ.jmb",
+        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage775_M02NMJ.jmb",
+
+
+        ## System
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/SystemJ.jmb"
 
 
         # US
@@ -431,7 +477,7 @@ if __name__ == '__main__':
         TaskWrapper(TaskDumpDDSTex, dump_path="DDS_mod.dds"),
         TaskWrapper(TaskExtractChars, extracted_dir="modded_dds_font"),
 
-        TaskWrapper(TaskGeneratePreview, preview_dir="jmks"),                                   # Generate Previews using registered chars
+        TaskWrapper(TaskGeneratePreview, seperate_by_jmbname=False, preview_dir="jmks"),                                   # Generate Previews using registered chars
         # TaskWrapper(TaskGeneratePreview, preview_dir="jmks", extracted_chars_dir = "dds_font"), # Generate Previews using external dir
 
         TaskSave,                   # write to `JMBS/{jmb_file}` as default
@@ -439,10 +485,11 @@ if __name__ == '__main__':
     ]
 
     tasks_preview_content = [
+        TaskPrintMetaData,
         TaskValidation,
         TaskWrapper(TaskExtractChars, extracted_dir="dds_font"),
         TaskWrapper(TaskDumpDDSTex, dump_path="DDS_ori.dds"),
-        TaskWrapper(TaskGeneratePreview, preview_dir="jmks", extracted_chars_dir = "dds_font"),
+        TaskWrapper(TaskGeneratePreview, seperate_by_jmbname=True, preview_dir="jmks", extracted_chars_dir = "dds_font"),
     ]
     tasks_test_translation = [
         TaskValidation,
@@ -454,7 +501,7 @@ if __name__ == '__main__':
         TaskValidation,
         TaskTranslation,
         TaskWrapper(TaskUpdateTex, import_from_file = False),
-        # TaskWrapper(TaskGeneratePreview, preview_dir="jmks"),
+        TaskWrapper(TaskGeneratePreview, seperate_by_jmbname=True, preview_dir="jmks"),
         TaskSave
     ]
 

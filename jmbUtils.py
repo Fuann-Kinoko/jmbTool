@@ -1,3 +1,7 @@
+import jmbConst
+from copy import deepcopy
+
+
 def display_char_data(lst: list[int]) -> list[int]:
     try:
         first_neg2_index = lst.index(-2)
@@ -39,3 +43,22 @@ def print_jmt_differences(original: list[list[str]]|None, modified: list[list[st
                 print(f"    Modified: {mod_line or '(none)'}\n")
     if not any_difference:
         print("No differences found.")
+
+def translation_correction(translation: list[list[str]], usage: jmbConst.JmkUsage) -> list[list[str]]:
+    ret_translation = deepcopy(translation)
+    for sent_idx, sent in enumerate(ret_translation):
+        for jmk_idx, jimaku in enumerate(sent):
+            for idx, char in enumerate(jimaku):
+                if char == "杀":
+                    ret_translation[sent_idx][jmk_idx][idx] = "殺"
+                if char == "?":
+                    ret_translation[sent_idx][jmk_idx][idx] = "？"
+                if char == "!":
+                    ret_translation[sent_idx][jmk_idx][idx] = "！"
+
+                if usage == jmbConst.JmkUsage.Hato:
+                    if char == "，":
+                        ret_translation[sent_idx][jmk_idx][idx] = ","
+                    if char == "。":
+                        ret_translation[sent_idx][jmk_idx][idx] = "."
+    return ret_translation

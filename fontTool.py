@@ -310,7 +310,7 @@ def save_preview_jimaku(
         img.save(filename=save_path)
         img.close()
         return
-    canvas = Image(width=35*4*2*len(char_data), height=HEIGHT*4, background=Color('black'))
+    canvas = Image(width=35*4*2*len(char_data), height=HEIGHT*16, background=Color('black'))
 
     current_x = 0
     for i, ctl in enumerate(char_data):
@@ -322,6 +322,7 @@ def save_preview_jimaku(
             step = kind.get_width(usage, alpha_ch=char)
             if original_alignment and kind in (FontKind.KANJI , FontKind.KATA , FontKind.NUM , FontKind.SPECIAL):
                 step += 1
+            # print(f"\tctl = {ctl}; char = {char}; Kind = {kind};\tparams = {char_info}")
         else:
             if ctl == -3:
                 char_img = gen_char_image(" ", usage)
@@ -335,14 +336,14 @@ def save_preview_jimaku(
                 char_info = fParams[index]
                 char_img = Image(filename=f"{provided_chars_dir}/char_{index:02d}.png")
                 step = (char_img.width // 4)+1
-        # print(f"ctl = {ctl}; char = {char}; Kind = {kind};\tparams = {char_info}")
+            # print(f"\tctl = {ctl}; char = (not provided); \tparams = {char_info}")
 
         canvas.composite(char_img, left=current_x, top=0, operator='atop')
         char_img.close()
         current_x += step*4
 
     if should_gen_char:
-        canvas.crop(0, 0, width=current_x + 16, height=57*4)
+        canvas.crop(0, 0, width=current_x + 16, height=HEIGHT*4)
     else:
         canvas.crop(0, 0, width=current_x + 16, height=fParams[0].h*4)
     canvas.format='png'

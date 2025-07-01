@@ -76,7 +76,7 @@ def reconstruction(
 
     # 创建透明背景的RGBA画布
     canvas_width = max_width
-    canvas_height = char_height * 10  # 初始高度足够大，最后再裁剪
+    canvas_height = char_height * 32  # 初始高度足够大，最后再裁剪
     canvas = Image(width=canvas_width, height=canvas_height, background=Color('transparent'))
 
     current_x = 0
@@ -191,7 +191,7 @@ def gen(
         case _:
             HEIGHT = 57
     canvas_width = max_width
-    canvas_height = HEIGHT * 4 * (len(unique_chars) // 8)
+    canvas_height = HEIGHT * 4 * ((len(unique_chars) // 8)+1)
 
     canvas = Image(width=canvas_width, height=canvas_height, background=Color('transparent'))
 
@@ -216,7 +216,7 @@ def gen(
             current_y += HEIGHT*4
 
         offset_y = 0
-        if usage == jmbConst.JmkUsage.Hato:
+        if False and usage == jmbConst.JmkUsage.Hato: # FIXME: is there any actual tilt?
             offset_y = - col_count
 
         char_img = fontTool.gen_char_image(char, usage)

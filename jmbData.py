@@ -182,7 +182,10 @@ class gDat_US(BaseGdat):
         after_meta = fp.tell()
         # print("!meta <-", after_meta)
         # print("!meta", self.meta.sentence_offset)
-        assert( after_meta == self.meta.sentence_offset)
+        assert after_meta == self.meta.sentence_offset, (
+            f"expecting sentence_offset : {self.meta.sentence_offset}",
+            f"writed pos after meta : {after_meta}"
+        )
 
         for sent in self.sentences:
             sent.write(fp)
