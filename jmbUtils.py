@@ -48,17 +48,21 @@ def translation_correction(translation: list[list[str]], usage: jmbConst.JmkUsag
     ret_translation = deepcopy(translation)
     for sent_idx, sent in enumerate(ret_translation):
         for jmk_idx, jimaku in enumerate(sent):
+            new_str = ""
             for idx, char in enumerate(jimaku):
+                cur_char = char
                 if char == "杀":
-                    ret_translation[sent_idx][jmk_idx][idx] = "殺"
+                    cur_char = "殺"
                 if char == "?":
-                    ret_translation[sent_idx][jmk_idx][idx] = "？"
+                    cur_char = "？"
                 if char == "!":
-                    ret_translation[sent_idx][jmk_idx][idx] = "！"
-
+                    cur_char = "！"
                 if usage == jmbConst.JmkUsage.Hato:
                     if char == "，":
-                        ret_translation[sent_idx][jmk_idx][idx] = ","
+                        cur_char = ","
                     if char == "。":
-                        ret_translation[sent_idx][jmk_idx][idx] = "."
+                        cur_char = "."
+                new_str += cur_char
+            ret_translation[sent_idx][jmk_idx] = new_str
+
     return ret_translation

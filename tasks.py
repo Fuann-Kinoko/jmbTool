@@ -363,12 +363,17 @@ def run_tasks(input_path:str, tasks:list[type], **task_args):
         **task_args
     })
 
-    if task_args['provided_text'] != None:
-        text = deepcopy(task_args['provided_text'])
+
+    raw_text_path = "assets/raw_text/" + task_args.get('jmb_output_prefix', "") + jmb_name + ".json"
+    if os.path.exists(raw_text_path):
+        f = open(raw_text_path, 'r', encoding='utf-8')
+        text = json.load(f)
+        f.close()
         text_flatten = ''.join(t for s in text for t in s)
         ctl2char_lookup, char2ctl_lookup, unique_chars = fontTool.register(text_flatten)
 
         shared_context.update({
+            'provided_text' : text,
             'text': text,
             'text_flatten': text_flatten,
             'ctl2char_lookup': ctl2char_lookup,
@@ -393,14 +398,23 @@ if __name__ == '__main__':
     files = [
         # JA
         ## CharaGeki
+        ### 00: Angel
         "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00010101/00010101/00010101J.jmb",
         "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00010101/00010101/00010101nmJ.jmb",
         "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020103/00020103/00020103J.jmb",
         "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020103/00020103/00020103nmJ.jmb",
-        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020301/00020301/00020301J.jmb",
-        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020707/00020707/00020707J.jmb",
-        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020709/00020709/00020709J.jmb",
-        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020711/00020711/00020711J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020203/00020203/00020203J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020301/00020301/00020301J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020502/00020502/00020502J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020703/00020703/00020703J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020703/00020703/00020703nmJ.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020707/00020707/00020707J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020707/00020707/00020707nmJ.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020709/00020709/00020709J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020709/00020709/00020709nmJ.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/00020711/00020711/00020711J.jmb",
+
+        ### 01: Sunset
         # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/01020203/01020203/01020203J.jmb",
         # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/01030101/01030101/01030101J.jmb",
         # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/01050102/01050102/01050102J.jmb",
@@ -409,33 +423,78 @@ if __name__ == '__main__':
         # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/CharaGeki/02010101/02010101/02010101J.jmb",
 
         ## Zan
+        ### 00: Angel
         "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0071010/0071010J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0071020/0071020J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0071030/0071030J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0071040/0071040J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0071060/0071060J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0071080/0071080J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0071100/0071100J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0071110/0071110J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0071120/0071120J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0071130/0071130J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0071150/0071150J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0071160/0071160J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0071170/0071170J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0071180/0071180J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0071190/0071190J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0072010/0072010J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0072020/0072020J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0072030/0072030J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0072040/0072040J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0072041/0072041J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0072042/0072042J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0073010/0073010J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0073011/0073011J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0073020/0073020J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0073050/0073050J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0073061/0073061J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0073062/0073062J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0073070/0073070J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0074010/0074010J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0074030/0074030J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0074040/0074040J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0074060/0074060J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0074070/0074070J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0075010/0075010J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0075030/0075030J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0075050/0075050J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0076010/0076010J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0076020/0076020J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0078010/0078010J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/Zan/0078011/0078011J.jmb",
 
         ## Hato
-        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/hato007201J.jmb",
+        ### 00: Angel
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/hato007201J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/hato007301J.jmb",
 
         ## Movie
+        ### 01: Sunset
         # "D:/SteamLibrary/steamapps/common/killer7/Movie/01010101/01010101.jmb",
 
         ## Panel
-        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/P000304J.jmb",
-        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/P000501J.jmb",
-        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/P000603J.jmb",
-        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/P007201J.jmb",
+        ### 00: Angel
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/P000304J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/P000501J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/P000603J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/P007201J.jmb",
 
         ## Stage
-        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage771_M02J.jmb",
-        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage771_M02NMJ.jmb",
-        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage772_M02J.jmb",
-        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage772_M02NMJ.jmb",
-        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage772_M03J.jmb",
-        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage773_M02J.jmb",
-        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage773_M03NMJ.jmb",
-        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage773_M04J.jmb",
-        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage773_M05J.jmb",
-        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage774_M02J.jmb",
-        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage774_M02NMJ.jmb",
-        # "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage775_M02NMJ.jmb",
+        ### 00: Angel
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage771_M02J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage771_M02NMJ.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage772_M02J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage772_M02NMJ.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage772_M03J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage773_M02J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage773_M03NMJ.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage773_M04J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage773_M05J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage774_M02J.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage774_M02NMJ.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/Stage775_M02NMJ.jmb",
 
 
         ## System
@@ -495,13 +554,13 @@ if __name__ == '__main__':
         TaskValidation,
         TaskTranslation,
         TaskWrapper(TaskUpdateTex, import_from_file = False),
-        TaskWrapper(TaskGeneratePreview, preview_dir="jmks"),
+        TaskWrapper(TaskGeneratePreview, seperate_by_jmbname=True, preview_dir="jmks"),
     ]
     tasks_save_translation = [
         TaskValidation,
         TaskTranslation,
         TaskWrapper(TaskUpdateTex, import_from_file = False),
-        TaskWrapper(TaskGeneratePreview, seperate_by_jmbname=True, preview_dir="jmks"),
+        # TaskWrapper(TaskGeneratePreview, seperate_by_jmbname=True, preview_dir="jmks"),
         TaskSave
     ]
 
@@ -516,21 +575,12 @@ if __name__ == '__main__':
     ]
 
     for file in files:
-        jmb_text = None
-        text_path = "assets/raw_text/" + os.path.basename(file)[:-4] + ".json"
-        if os.path.exists(text_path):
-            f = open(text_path, 'r', encoding='utf-8')
-            jmb_text = json.load(f)
-            f.close()
-
         run_tasks(
             input_path = file,
 
             # NOTE: switch between these sets or create your own stuff
-            # tasks = tasks_preview_content,
+            tasks = tasks_preview_content,
             # tasks = tasks_test_translation,
-            tasks = tasks_save_translation,
+            # tasks = tasks_save_translation,
             # tasks = custom,
-
-            provided_text=jmb_text,
         )

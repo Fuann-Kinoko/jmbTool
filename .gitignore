@@ -7,3 +7,4 @@ dumpJMB.py
 testFont.py
 !assets/
 !assets/**
+OCR_zan.py

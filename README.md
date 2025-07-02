@@ -32,3 +32,19 @@ python tasks.py
 ```
 
 The `.BIN` file can be interpreted as a `stTex` struct (72-byte DDS header + DDS texture data), though this hasn't been thoroughly tested.
+
+# Notes
+
+## Translation
+
+Typically, control codes are dynamically regenerated because their character mappings depend on when they first appear in the text stream.
+
+However, certain special characters have to be manually coded.
+
+```json
+"暴君で@0aを使い─"
+```
+
+In this case, the sequence `@0a` is interpreted as the control code `FF 0A` (big endian), regardless of its position in the text.
+
+For this particular control code, it represents `SPACE` key for keyboard, or to say, `R Trigger` in gamepad.

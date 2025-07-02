@@ -1,4 +1,5 @@
 from jmbStruct import *
+from jmbNumeric import S16
 import jmbConst
 import jmbUtils
 
@@ -382,15 +383,31 @@ class gDat_JA(BaseGdat):
 
     def update_sentence_ctl(self, translation: list[list[str]], char2ctl_lookup: dict[str, int], validation_mode = False):
         assert(self.meta.sentence_num == len(translation))
+
         for i, local_sent in enumerate(translation):
             assert(self.sentences[i].valid_jmk_num() == len(local_sent))
+
             for j, local_jmk in enumerate(local_sent):
-                local_ctls = [char2ctl_lookup[ch] for ch in local_jmk]
-                assert(len(local_ctls) < jmbConst.JIMAKU_CHAR_MAX)
+                local_ctls = []
+                k = 0
+                while k < len(local_jmk):
+                    cur_char = local_jmk[k]
+                    # Check for @ sequences
+                    if cur_char == '@':
+                        assert k + 2 < len(local_jmk)
+                        assert local_jmk[k+1].isalnum() and local_jmk[k+2].isalnum()
+                        local_ctls.append(S16(f"ff{local_jmk[k+1]}{local_jmk[k+2]}").to_int())
+                        k += 3
+                        continue
+                    # Normal character processing
+                    local_ctls.append(char2ctl_lookup[cur_char])
+                    k += 1
+
+                assert len(local_ctls) < jmbConst.JIMAKU_CHAR_MAX
                 local_ctls.append(-2)
                 while len(local_ctls) < jmbConst.JIMAKU_CHAR_MAX:
                     local_ctls.append(-1)
-                assert(len(local_ctls) == len(self.sentences[i].jimaku_list[j].char_data))
+                assert len(local_ctls) == len(self.sentences[i].jimaku_list[j].char_data)
 
                 if validation_mode:
                     assert(self.sentences[i].jimaku_list[j].valid_len() == len(local_jmk))
