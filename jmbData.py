@@ -1,5 +1,5 @@
 from jmbStruct import *
-from jmbNumeric import S16
+from jmbNumeric import S16_BE
 import jmbConst
 import jmbUtils
 
@@ -396,7 +396,7 @@ class gDat_JA(BaseGdat):
                     if cur_char == '@':
                         assert k + 2 < len(local_jmk)
                         assert local_jmk[k+1].isalnum() and local_jmk[k+2].isalnum()
-                        local_ctls.append(S16(f"ff{local_jmk[k+1]}{local_jmk[k+2]}").to_int())
+                        local_ctls.append(S16_BE(f"ff{local_jmk[k+1]}{local_jmk[k+2]}").to_int())
                         k += 3
                         continue
                     # Normal character processing

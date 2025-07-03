@@ -2,7 +2,7 @@ from enum import Enum, auto
 import os
 from jmbConst import JmkUsage
 from jmbStruct import stFontParam, stJimaku
-from jmbNumeric import S16
+from jmbNumeric import S16_BE
 import jmbUtils
 
 from wand.image import Image
@@ -15,10 +15,10 @@ Font_SourceHan = "SourceHanSerifCN-Bold.otf"
 Font_HiraginoMincho = "HiraginoMinCho-W6.ttc"
 Font_DanYaMingTi = "DanYaMingTiA.ttf"
 
-SATSU_FLAG      = S16("8000")
-SHI_FLAG        = S16("7000")
-SPACE_H_FLAG    = S16("fffd")
-SPACE_Z_FLAG    = S16("fffc")
+SATSU_FLAG      = S16_BE("8000")
+SHI_FLAG        = S16_BE("7000")
+SPACE_H_FLAG    = S16_BE("fffd")
+SPACE_Z_FLAG    = S16_BE("fffc")
 
 BODY_FACE_SCALE_SIZE = 57
 HATO_FACE_SCALE_SIZE = 44
@@ -214,12 +214,12 @@ def register(input: str) -> tuple[dict[int, str], dict[str, int], str]:
         if char not in char2ctl_dict:
             unique_jmk += char
             if char == "殺":
-                counter_s16 = S16(counter)
+                counter_s16 = S16_BE(counter)
                 signed = (counter_s16 | SATSU_FLAG).to_int()
                 ctl2char_dict[signed] = char
                 char2ctl_dict[char] = signed
             elif char == "死":
-                counter_s16 = S16(counter)
+                counter_s16 = S16_BE(counter)
                 signed = (counter_s16 | SHI_FLAG).to_int()
                 ctl2char_dict[signed] = char
                 char2ctl_dict[char] = signed
@@ -332,9 +332,9 @@ def save_preview_jimaku(
     current_x = 0
     for i, ctl in enumerate(char_data):
         if should_gen_char:
-            ctl_s16 = S16(ctl)
+            ctl_s16 = S16_BE(ctl)
             if ctl not in ctl2char_lookup:
-                if (ctl_s16 & S16("ff00")) == S16("ff00"):
+                if (ctl_s16 & S16_BE("ff00")) == S16_BE("ff00"):
                     print(f"ctl = {ctl}, \tctl_s16 = {ctl_s16}, \t游戏按键！")
                     char_img = gen_char_image("@", usage)
                     step = 40
@@ -350,22 +350,22 @@ def save_preview_jimaku(
                     step += 1
             # print(f"\tctl = {ctl}; char = {char}; Kind = {kind};\tparams = {char_info}")
         else:
-            ctl_s16 = S16(ctl)
+            ctl_s16 = S16_BE(ctl)
             if ctl_s16 == SPACE_H_FLAG:
                 char_img = gen_char_image(" ", usage)
                 step = 21
             elif ctl_s16 == SPACE_Z_FLAG:
                 char_img = gen_char_image("　", usage)
                 step = 21
-            elif (ctl_s16 & S16("ff00")) == S16("ff00"):
+            elif (ctl_s16 & S16_BE("ff00")) == S16_BE("ff00"):
                 print(f"ctl = {ctl}, \tctl_s16 = {ctl_s16}, \t游戏按键！")
                 char_img = gen_char_image("@", usage)
                 step = 40
             else:
-                if (ctl_s16 & SHI_FLAG) != S16("0000") or (ctl_s16 & SATSU_FLAG) != S16("0000"):
-                    mask = S16("0fff")
+                if (ctl_s16 & SHI_FLAG) != S16_BE("0000") or (ctl_s16 & SATSU_FLAG) != S16_BE("0000"):
+                    mask = S16_BE("0fff")
                 else:
-                    mask = S16("ffff")
+                    mask = S16_BE("ffff")
                 index = (mask & ctl_s16).to_int()
                 # print(f"ctl = {ctl}, \tctl_s16 = {ctl_s16}, \tindex = {index}")
                 char_info = fParams[index]
