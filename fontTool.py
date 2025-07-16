@@ -23,29 +23,31 @@ SPACE_Z_FLAG    = S16_BE("fffc")
 BODY_FACE_SCALE_SIZE = 57
 HATO_FACE_SCALE_SIZE = 44
 NAME_FACE_SCALE_SIZE = 34
+TUTORIAL_FACE_SCALE_SIZE = 21
 
 BODY_WIDTH_SCALE_SIZE = 35
 HATO_WIDTH_SCALE_SIZE = 30
 NAME_WIDTH_SCALE_SIZE = 28
+TUTORIAL_WIDTH_SCALE_SIZE = 17
 
 DEFAULT_FACE_SIZE = 142         # scale = 7.5
-KATA_FACE_SIZE = 112            # scale = 6
-KANA_FACE_SIZE = 104            # scale = 5.5
+KATA_FACE_SIZE    = 112         # scale = 6
+KANA_FACE_SIZE    = 104         # scale = 5.5
 SPECIAL_FACE_SIZE = 188         # scale = 10
-NUM_FACE_SIZE = 142             # scale = 7.5
-QUOTE_FACE_SIZE = 142           # scale = 7.5
-ALPHA_FACE_SIZE = 142           # scale = 7.5
-PUNCT_FACE_SIZE = 142           # scale = 7.5
+NUM_FACE_SIZE     = 142         # scale = 7.5
+QUOTE_FACE_SIZE   = 142         # scale = 7.5
+ALPHA_FACE_SIZE   = 142         # scale = 7.5
+PUNCT_FACE_SIZE   = 142         # scale = 7.5
 
 DEFAULT_HEIGHT = 57
 
-DEFAULT_WIDTH  = 35
-KATA_WIDTH  = 28
-KANA_WIDTH = 26
-SPECIAL_WIDTH = 47
-NUM_WIDTH = 21
-QUOTE_WIDTH = 19
-PUNCT_WIDTH = 8
+DEFAULT_WIDTH   = 35
+KATA_WIDTH      = 28
+KANA_WIDTH      = 26
+SPECIAL_WIDTH   = 47
+NUM_WIDTH       = 21
+QUOTE_WIDTH     = 19
+PUNCT_WIDTH     = 8
 LOWERCASE_ALPHA_WIDTH = [
     11, 12, 11, 12,
     11, 8,  12, 12,
@@ -73,6 +75,8 @@ def get_face_scale_factor(usage: JmkUsage) -> float:
             return NAME_FACE_SCALE_SIZE / BODY_FACE_SCALE_SIZE
         case JmkUsage.Hato:
             return HATO_FACE_SCALE_SIZE / BODY_FACE_SCALE_SIZE
+        case JmkUsage.Tutorial:
+            return TUTORIAL_FACE_SCALE_SIZE / BODY_FACE_SCALE_SIZE
         case JmkUsage.Default:
             return 1.0
         case _:
@@ -84,20 +88,22 @@ def get_width_scale_factor(usage: JmkUsage) -> float:
             return NAME_WIDTH_SCALE_SIZE / BODY_WIDTH_SCALE_SIZE
         case JmkUsage.Hato:
             return HATO_WIDTH_SCALE_SIZE / BODY_WIDTH_SCALE_SIZE
+        case JmkUsage.Tutorial:
+            return TUTORIAL_WIDTH_SCALE_SIZE / BODY_WIDTH_SCALE_SIZE
         case JmkUsage.Default:
             return 1.0
         case _:
             assert False, "unreachable"
 
 class FontKind(Enum):
-    KANJI = auto()
-    KATA = auto()
-    KANA = auto()
+    KANJI   = auto()
+    KATA    = auto()
+    KANA    = auto()
     SPECIAL = auto()
-    NUM = auto()
-    QUOTE = auto()
-    ALPHA = auto()
-    PUNCT = auto()
+    NUM     = auto()
+    QUOTE   = auto()
+    ALPHA   = auto()
+    PUNCT   = auto()
 
     def get_face_size(self, usage: JmkUsage) -> int:
         scale = get_face_scale_factor(usage)
@@ -240,6 +246,7 @@ def gen_char_image(char: str, usage: JmkUsage, info: stFontParam = None) -> Imag
     else:
         img = Image(width=kind.get_width(usage, alpha_ch = char)*4, height=kind.get_height(usage, alpha_ch = char)*4, background=Color('transparent'))
 
+
     if kind == FontKind.QUOTE:
         if char == "“":
             img = Image(filename="assets/chars/JA_quote_open.png")
@@ -317,6 +324,8 @@ def save_preview_jimaku(
             HEIGHT = NAME_FACE_SCALE_SIZE
         case JmkUsage.Hato:
             HEIGHT = HATO_FACE_SCALE_SIZE
+        case JmkUsage.Tutorial:
+            HEIGHT = TUTORIAL_FACE_SCALE_SIZE
         case _:
             HEIGHT = DEFAULT_HEIGHT
 
@@ -407,6 +416,7 @@ def genFParams(
             1. Nameplate  (34px height).
             2. Hato(Mail) (44px height).
             3. Default    (57px height)
+            4. Tutorial   (21px height)
         max_width (int, optional): Maximum width of the virtual texture in pixels.
             Characters will wrap to new line when exceeding this width. Defaults to 512.
         original_alignment (bool, optional): If True, adds 1px spacing to certain character types
@@ -428,11 +438,13 @@ def genFParams(
     ret_list : list[stFontParam] = []
     match usage:
         case JmkUsage.Name:
-            HEIGHT = 34
+            HEIGHT = NAME_FACE_SCALE_SIZE
         case JmkUsage.Hato:
-            HEIGHT = 44
+            HEIGHT = HATO_FACE_SCALE_SIZE
+        case JmkUsage.Tutorial:
+            HEIGHT = TUTORIAL_FACE_SCALE_SIZE
         case _:
-            HEIGHT = 57
+            HEIGHT = BODY_FACE_SCALE_SIZE
     u = 0
     v = 0
     row_count = 0

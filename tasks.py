@@ -234,7 +234,7 @@ def TaskPrintRegisteredChars(self:JMBBaseTask):
 @basicTask
 def TaskFlushFParams(self:JMBBaseTask):
     """
-    Prints font parameters.
+    Flush font parameters.
 
     Parameters:
         None
@@ -338,12 +338,17 @@ def run_tasks(input_path:str, tasks:list[type], **task_args):
     if 'hato' in jmb_name:
         assert usage == jmbConst.JmkUsage.Default
         usage = jmbConst.JmkUsage.Hato
+    if 'tutorial' in jmb_name:
+        assert usage == jmbConst.JmkUsage.Default
+        usage = jmbConst.JmkUsage.Tutorial
     task_args['jmb_usage'] = usage
 
     if 'Zan' in input_path:
         task_args['jmb_output_prefix'] = 'Zan/'
     if 'hato' in jmb_name:
         task_args['jmb_output_prefix'] = 'hato/'
+    if 'tutorial' in jmb_name:
+        task_args['jmb_output_prefix'] = 'Tutorial/'
     if 'Movie' in input_path:
         task_args['jmb_output_prefix'] = 'Movie/'
     if 'fonts' in input_path and 'P' in jmb_name:
@@ -498,7 +503,11 @@ if __name__ == '__main__':
 
 
         ## System
-        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/SystemJ.jmb"
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/fonts/SystemJ.jmb",
+
+        ## Tutorial
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/tutorial/panelTutorialJ/Stage_tutorialJ.jmb",
+        "D:/SteamLibrary/steamapps/common/killer7/ReadOnly/tutorial/panelTutorialJ/tutorial_logJ.jmb",
 
 
         # US

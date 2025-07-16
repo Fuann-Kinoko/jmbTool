@@ -19,11 +19,11 @@ class S16_BE:
         return struct.unpack('>h', self.value)[0]
 
     def __or__(self, other: 'S16_BE') -> 'S16_BE':
-        len(self.value) == len(other.value)
+        assert len(self.value) == len(other.value)
         return S16_BE.from_bytes(bytes(map(lambda a,b: a|b, self.value, other.value)))
 
     def __and__(self, other: 'S16_BE') -> 'S16_BE':
-        len(self.value) == len(other.value)
+        assert len(self.value) == len(other.value)
         return S16_BE.from_bytes(bytes(map(lambda a,b: a&b, self.value, other.value)))
 
     def __eq__(self, other: 'S16_BE') -> bool:

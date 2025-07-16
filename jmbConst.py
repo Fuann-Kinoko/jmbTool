@@ -8,9 +8,14 @@ JIMAKU_LINE_MAX = 16
 
 US_JIMAKU_CHAR_MAX = 128
 
+STRIMAGE_MAXSTRPACKNUM = 500
+STRIMAGE_SIMAXSTRNUM = (30 + 1)
+STRIMAGE_SIMAXSTRCHRNUM = (128 + 1)
+
 from enum import Enum, auto
 
 class JmkUsage(Enum):
     Default = auto()
     Name = auto()
     Hato = auto()
+    Tutorial = auto()

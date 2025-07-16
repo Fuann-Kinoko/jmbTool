@@ -164,6 +164,7 @@ def gen(
             1. Nameplate  (34px height).
             2. Hato(Mail) (44px height).
             3. Default    (57px height)
+            4. Tutorial   (21px height)
 
         max_width (int, optional): Maximum texture width in pixels. Defaults to 4x JIMAKU_TEX_WIDTH
         fixed_max_width (bool, optional):
@@ -183,13 +184,10 @@ def gen(
             Defaults to True (a replication of original behavior).
             But recommended to be False.
     """
-    match usage:
-        case jmbConst.JmkUsage.Name:
-            HEIGHT = 34
-        case jmbConst.JmkUsage.Hato:
-            HEIGHT = 44
-        case _:
-            HEIGHT = 57
+    tmp_kind = fontTool.check_kind(unique_chars[0])
+    HEIGHT = tmp_kind.get_height(usage, alpha_ch=unique_chars[0])
+    del tmp_kind
+
     canvas_width = max_width
     canvas_height = HEIGHT * 4 * ((len(unique_chars) // 8)+1)
 
