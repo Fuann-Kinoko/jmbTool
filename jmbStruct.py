@@ -524,6 +524,209 @@ class stFontParam:
             self.h == other.h
         )
 
+class texStrImageHeader:
+    def __init__(self, fp=None):
+        self.STRUCT_SIZE = 32
+        self.magic = b'\x00'*8
+        self.magic_padding = b'\x00'*4
+        self.height = 0                 # int
+        self.strPackNum = 0             # int, 文字列pack的数量
+        self.strNum = 0                 # int, 文字列的数量
+        self.chrNum = 0                 # int, 文字数
+        self.tume = 0                   # int, 文字间距
+        if fp is not None:
+            self.read(fp)
+
+    def read(self, fp):
+        before = fp.tell()
+        self.magic = fp.read(8)
+        assert self.magic == b"STRIMAGE"
+
+        self.magic_padding = fp.read(4)
+        assert self.magic_padding == b"\x00"*4
+
+        self.height     = struct.unpack('<i', fp.read(4))[0]
+        self.strPackNum = struct.unpack('<i', fp.read(4))[0]
+        self.strNum     = struct.unpack('<i', fp.read(4))[0]
+        self.chrNum     = struct.unpack('<i', fp.read(4))[0]
+        self.tume       = struct.unpack('<i', fp.read(4))[0]
+
+        after = fp.tell()
+        assert after - before == self.STRUCT_SIZE
+
+    def write(self, fp):
+        before = fp.tell()
+        fp.write(self.magic)
+        fp.write(self.magic_padding)
+        fp.write(struct.pack('<i', self.height))
+        fp.write(struct.pack('<i', self.strPackNum))
+        fp.write(struct.pack('<i', self.strNum))
+        fp.write(struct.pack('<i', self.chrNum))
+        fp.write(struct.pack('<i', self.tume))
+        after = fp.tell()
+        assert after - before == self.STRUCT_SIZE
+
+    def __repr__(self):
+        return (
+            f"texStrImageHeader(\n"
+            f"  magic={self.magic!r},\n"
+            f"  magic_padding={self.magic_padding!r},\n"
+            f"  height={self.height},\n"
+            f"  strPackNum={self.strPackNum},\n"
+            f"  strNum={self.strNum},\n"
+            f"  chrNum={self.chrNum},\n"
+            f"  tume={self.tume}\n"
+            f")"
+        )
+
+class SIStrPack:
+    def __init__(self, fp=None):
+        self.STRUCT_SIZE = 62
+        self.strIndex:list[int] = []
+        if fp is not None:
+            self.read(fp)
+
+    def read(self, fp):
+        before = fp.tell()
+        self.strIndex = []
+        for _ in range(jmbConst.STRIMAGE_SIMAXSTRNUM):
+            index = struct.unpack('<h', fp.read(2))[0]
+            self.strIndex.append(index)
+        after = fp.tell()
+        assert after - before == self.STRUCT_SIZE
+
+    def write(self, fp):
+        before = fp.tell()
+        assert len(self.strIndex) == jmbConst.STRIMAGE_SIMAXSTRNUM
+        for index in self.strIndex:
+            fp.write(struct.pack('<h', index))
+        after = fp.tell()
+        assert after - before == self.STRUCT_SIZE
+
+    def __repr__(self):
+        return f"SIStrPack(strIndex[{len(self.strIndex)}]={self.strIndex})"
+
+class SIStr:
+    def __init__(self, fp=None):
+        self.STRUCT_SIZE = 258
+        self.strIndex:list[int] = []
+        if fp is not None:
+            self.read(fp)
+
+    def read(self, fp):
+        before = fp.tell()
+        self.strIndex = []
+        for _ in range(jmbConst.STRIMAGE_SIMAXSTRCHRNUM):
+            chr = struct.unpack('<h', fp.read(2))[0]
+            self.strIndex.append(chr)
+        after = fp.tell()
+        assert after - before == self.STRUCT_SIZE
+
+    def write(self, fp):
+        before = fp.tell()
+        assert len(self.strIndex) == jmbConst.STRIMAGE_SIMAXSTRCHRNUM
+        for chr in self.strIndex:
+            fp.write(struct.pack('<h', chr))
+        after = fp.tell()
+        assert after - before == self.STRUCT_SIZE
+
+    def __repr__(self):
+        return f"SIStr(strIndex[{len(self.strIndex)}]={self.strIndex})"
+
+class SIChr:
+    def __init__(self, fp=None):
+        self.STRUCT_SIZE = 24
+        self.code   = 0         # I
+        self.x      = 0         # H
+        self.y      = 0         # H
+        self.w      = 0         # H
+        self.h      = 0         # H
+        self.dx     = 0         # h
+        self.dy     = 0         # h
+        self.addx   = 0         # H
+        self.addw   = b'\x00'   # char
+        self.code2  = 0         # I
+        if fp is not None:
+            self.read(fp)
+
+    def read(self, fp):
+        before = fp.tell()
+        self.code   = struct.unpack('<I', fp.read(4))[0]
+        self.x      = struct.unpack('<H', fp.read(2))[0]
+        self.y      = struct.unpack('<H', fp.read(2))[0]
+        self.w      = struct.unpack('<H', fp.read(2))[0]
+        self.h      = struct.unpack('<H', fp.read(2))[0]
+        self.dx     = struct.unpack('<h', fp.read(2))[0]
+        self.dy     = struct.unpack('<h', fp.read(2))[0]
+        self.addx   = struct.unpack('<H', fp.read(2))[0]
+        self.addw   = fp.read(1)
+        _ = fp.read(1)
+        self.code2  = struct.unpack('<I', fp.read(4))[0]
+        after = fp.tell()
+        assert after - before == self.STRUCT_SIZE
+
+    def write(self, fp):
+        before = fp.tell()
+        fp.write(struct.pack('<I', self.code))
+        fp.write(struct.pack('<H', self.x))
+        fp.write(struct.pack('<H', self.y))
+        fp.write(struct.pack('<H', self.w))
+        fp.write(struct.pack('<H', self.h))
+        fp.write(struct.pack('<h', self.dx))
+        fp.write(struct.pack('<h', self.dy))
+        fp.write(struct.pack('<H', self.addx))
+        fp.write(self.addw)
+        fp.write(b'\x00')  # padding
+        fp.write(struct.pack('<I', self.code2))
+        after = fp.tell()
+        assert after - before == self.STRUCT_SIZE
+
+    def __repr__(self):
+        return (f"SIChr(code={chr(self.code)!r} (0x{self.code:04X}), x={self.x}, y={self.y}, "
+                f"w={self.w}, h={self.h}, dx={self.dx}, dy={self.dy}, addx={self.addx}, "
+                f"addw={self.addw}, code2={chr(self.code2)!r} (0x{self.code2:04X}))")
+
+
+class texStrImage:
+    def __init__(self, fp=None):
+        self.header : texStrImageHeader
+        self.strpack : list[SIStrPack] = []
+        self.str : list[SIStr] = []
+        self.chb : list[SIChr] = []
+        self.tex : stTex = None
+        if fp is not None:
+            self.read(fp)
+
+    def read(self, fp):
+        self.header = texStrImageHeader(fp)
+
+        self.strpack = []
+        for i in range(self.header.strPackNum):
+            self.strpack.append(SIStrPack(fp))
+
+        self.str = []
+        for i in range(self.header.strNum):
+            self.str.append(SIStr(fp))
+
+        self.chb = []
+        for i in range(self.header.chrNum):
+            self.chb.append(SIChr(fp))
+
+        self.tex = stTex(fp)
+
+    def write(self, fp):
+        assert self.header.strPackNum == len(self.strpack)
+        assert self.header.strNum == len(self.str)
+        assert self.header.chrNum == len(self.chb)
+        self.header.write(fp)
+        for i in range(self.header.strPackNum):
+            self.strpack[i].write(fp)
+        for i in range(self.header.strNum):
+            self.str[i].write(fp)
+        for i in range(self.header.chrNum):
+            self.chb[i].write(fp)
+        self.tex.write(fp)
+
 class texMeta:
     def __init__(self, fp=None):
         self.STRUCT_SIZE = 72
@@ -538,13 +741,13 @@ class texMeta:
     def read(self, fp):
         before = fp.tell()
         self.magic = fp.read(4)
-        assert(self.magic == b'GCT0' or self.magic == b'\x00'*4)
+        assert self.magic == b'GCT0' or self.magic == b'\x00'*4, f"Assertion Failed. read {self.magic}, expect: 'GCT0'/'0000'"
 
         self.idk = fp.read(4)
-        if self.magic == b'GCT0':
-            assert(self.idk == b'\x00'*4)
-        else:
-            assert(self.idk == b'\x06\x00\x00\x00')
+        # if self.magic == b'GCT0':
+        #     assert (self.idk == b'\x00'*4 or self.idk == b'\x06\x00\x00\x00'), f"Assertion Failed. read {self.idk.hex(' ')}, expect: 00/06 00 00 00"
+        # else:
+        #     assert(self.idk == b'\x06\x00\x00\x00')
 
         self.w = struct.unpack('<H', fp.read(2))[0]
         self.h = struct.unpack('<H', fp.read(2))[0]
@@ -577,7 +780,7 @@ class texMeta:
         NotImplemented
 
     def __repr__(self):
-        return (f"texMeta(w={self.w}, h={self.h}, dds_size={self.dds_size})")
+        return (f"texMeta(magic={self.magic}, idk={self.idk}, w={self.w}, h={self.h}, dds_size={self.dds_size})")
 
 class stTex:
     def __init__(self, fp=None):
