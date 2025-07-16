@@ -1,4 +1,5 @@
 *
+!.gitattributes
 !.gitignore
 !*.py
 !README.md
@@ -9,3 +10,5 @@ testFont.py
 !assets/**
 OCR_zan.py
 scratch.py
+!IDA_Related/
+!IDA_Related/**
