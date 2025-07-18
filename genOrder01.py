@@ -43,7 +43,8 @@ def gen_char_image(char: str, width, height) -> Image:
 # 例：Y7StageTitle.cpp, YK7StageTitleDat.h
 # 换行的纯粹原因似乎只是因为第二行的第一个字是“及”，
 # 如果把及放到fake_sjs其它地方，就会影响什么时候换行
-fake_sjs = "笑顔本陣壊滅依頼及び、首領の生け捕り"
+fake_sjs = "笑顔本陣壊滅依頼及び、首領の生け捕り"       # 这个是正确版本
+# fake_sjs = "笑顔本陣壊滅依頼　及び、首領の生け捕り"   # 这个反而会吞掉译文第二行第一个字
 def gen_default_chr(char: str, cur_x = 0, cur_y = 0) -> SIChr:
     addx = BLOCK_HEIGHT
     addw = 1
@@ -71,6 +72,7 @@ print_info(strimage)
 
 line1 = "笑颜总部歼灭委托"
 line2 = "及首领的活捉"
+assert len(line1 + line2) == 14
 strimage.header.chrNum = 14
 strimage.str[0].strIndex[:8] = [0,1,2,3,4,5,6,7]
 strimage.str[0].strIndex[8:13] = [-1,0,0,0,0]
