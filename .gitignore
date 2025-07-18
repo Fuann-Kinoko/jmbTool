@@ -9,6 +9,7 @@ __pycache__/
 *.BIN
 *.ini
 texconv.exe
+
 JMBS/
 dds_font/
 modded_dds_font/
@@ -18,6 +19,10 @@ stis/
 subtitles/
 tutorial_hardcoded/
 tvs/
+ripScript/
+
+assets/raw_text/
+
 testFont.py
 chore.py
 dumpJMB.py
