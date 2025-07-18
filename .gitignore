@@ -1,7 +1,7 @@
 *
 !IDA_Related/**
 !assets/
-assets/raw_text/
+!assets/**
 !.gitignore
 
 !README.md

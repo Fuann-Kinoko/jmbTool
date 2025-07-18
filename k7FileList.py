@@ -237,6 +237,42 @@ class FileLister:
             case _:
                 assert False, "unreachable"
 
+    def getHato(self, la: JmkKind) -> list[list[str]]:
+        match la:
+            case JmkKind.JA:
+                return self._Hato_JA
+            case JmkKind.US:
+                assert False, "no impl"
+            case _:
+                assert False, "unreachable"
+
+    def getPanel(self, la: JmkKind) -> list[list[str]]:
+        match la:
+            case JmkKind.JA:
+                return self._Panel_JA
+            case JmkKind.US:
+                assert False, "no impl"
+            case _:
+                assert False, "unreachable"
+
+    def getStage(self, la: JmkKind) -> list[list[str]]:
+        match la:
+            case JmkKind.JA:
+                return self._Stage_JA
+            case JmkKind.US:
+                assert False, "no impl"
+            case _:
+                assert False, "unreachable"
+
+    def getMovie(self, la: JmkKind) -> list[list[str]]:
+        match la:
+            case JmkKind.JA:
+                return self._Movie_JA
+            case JmkKind.US:
+                assert False, "no impl"
+            case _:
+                assert False, "unreachable"
+
     @overload
     @staticmethod
     def flatten_list(nested_list: list[list[str]]) -> list[str]: ...
