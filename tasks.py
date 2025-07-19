@@ -3,7 +3,8 @@ import fontTool
 import DDSTool
 import jmbUtils
 import jmbConst
-from jmbData import BaseGdat, JmkKind, gDat, gDat_JA
+from jmbConst import JmkKind
+from jmbData import BaseGdat, gDat, gDat_JA
 
 import argparse
 import json

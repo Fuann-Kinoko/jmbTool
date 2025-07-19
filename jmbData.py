@@ -2,6 +2,7 @@ from jmbStruct import *
 from jmbNumeric import S16_BE
 import jmbConst
 import jmbUtils
+from jmbConst import JmkKind
 
 from enum import Enum, auto
 from copy import copy
@@ -9,10 +10,6 @@ from abc import ABC, abstractmethod
 import io
 
 import wand.image
-
-class JmkKind(Enum):
-    JA = auto()
-    US = auto()
 
 class BaseGdat(ABC):
     def __init__(self, source = None):
