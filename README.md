@@ -241,7 +241,6 @@ if _TYPE_is_JA(jmb):
     jmk_0.overwrite_ctl(codes)
     # Update atlas texture
     jmb.reimport_tex(atlas_path)
-    jmb.recalculate_meta() # Recalculate header since some sizes have changed
 elif _TYPE_is_US(jmb):
     # Update font parameters
     jmb.fParams = ... # Replace with your updated font parameters
@@ -250,7 +249,6 @@ elif _TYPE_is_US(jmb):
     jmk_0.overwrite_ctl(codes)
     # Update atlas texture
     jmb.reimport_tex(atlas_path)
-    jmb.recalculate_meta() # Recalculate header since some sizes have changed
 else:
     assert False, "unreachable"
 
@@ -331,7 +329,6 @@ for idx, jmk in enumerate(jmb.sentences):
     text_codes = [char2ctl_lookup[c] for c in text_sentence]
     jmk.overwrite_ctl(text_codes)
 jmb.reimport_tex("atlas.dds")
-jmb.recalculate_meta()
 
 jmb.write_to_file("00010101.jmb")
 ```
