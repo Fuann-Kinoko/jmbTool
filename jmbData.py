@@ -1,3 +1,4 @@
+from typing import overload, Literal
 from abc import ABC, abstractmethod
 import io
 import os
@@ -21,8 +22,14 @@ class BaseGdat(ABC):
             else:
                 self.read(source, bigEndian)
 
+    @overload
     @classmethod
-    def create(cls, source, kind:JmkKind):
+    def create(cls, source: str, kind: Literal[JmkKind.JA]) -> 'gDat_JA': ...
+    @overload
+    @classmethod
+    def create(cls, source: str, kind: Literal[JmkKind.US]) -> 'gDat_US': ...
+    @classmethod
+    def create(cls, source, kind: JmkKind):
         """
         source: filepath (str) | fp
         kind: JmkKind (JA | US)

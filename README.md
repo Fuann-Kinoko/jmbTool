@@ -201,7 +201,11 @@ jmb.write_to_file("new.jmb")
 
 ### Translation: Updating Control Codes and Texture
 
-This library does not handle atlas generation. You'll need to implement this separately, or refer to the [k7cn](https://github.com/Fuann-Kinoko/k7cn/blob/master/DDSTool.py) project for an example of CJK atlas generation.
+This library provides a basic, non-flexible atlas generation method. If you are working on translation, you may need to implement a more flexible solution to handle various font types. However, the built-in generator allows for a quick test.
+
+For a more complex example, please refer to the [k7cn](https://github.com/Fuann-Kinoko/k7cn/blob/master/DDSTool.py) project for an example of CJK atlas generation.
+
+#### Overview
 
 Assuming you have translated subtitles with new control codes and a generated texture:
 ```
@@ -219,10 +223,10 @@ valid sentence data:
     0 1 2 3 -4 2 3 -4 4 5 6 3 5
     (-4 = full-width space; -3 = half-width space)
 font params:
-    prepare by yourself
+    prepare your own
 ```
 
-The following code demonstrates how to update the JMB file and save the translated version:
+The following code shows how to update the JMB file and save the translated version:
 
 ```python
 text = "This is a test"
@@ -251,6 +255,85 @@ else:
     assert False, "unreachable"
 
 jmb.write_to_file("new.jmb") # Save translated version
+```
+
+#### Built-in Atlas Generation
+
+Below is a quick demo of generating an atlas from translated text using the integrated generator and updating the JMB file:
+
+```python
+from jmbTool import atlasGeneration, jmbData, jmbConst
+
+INPUT_PATH = "killer7\\ReadOnly\\CharaGeki\\00010101\\00010101\\00010101.jmb"
+CHAR_HEIGHT     = 24
+FONT_SIZE       = 68
+FONT_PATH       = "SourceHanSerifCN-Bold.otf"
+SCALE_FACTOR    = 4
+jmb = jmbData.BaseGdat.create(INPUT_PATH, jmbConst.JmkKind.US)
+
+text = [
+    "Это　я,　ты　уже　на　месте?",
+    "Ты　имеешь　в　виду　эту　дыру?",
+    "Там　они　все　тусуются.",
+    "Наша　информация　говорит,　что　их　там　14.",
+    "И　всех　надо　охотиться?",
+    "Не,　оставь　одного　в　живых,",
+    "чтобы　мы　могли　спросить,",
+    "кто　их　босс.",
+    "Что　ещё　мне　нужно　знать?",
+    "Да　нет,　в　общем-то,　ты　поймёшь,　когда　их　увидишь,",
+    "они,　э-э...　другие.",
+    "Будет　сделано.",
+    "Пусть　Господь　улыбнётся...",
+    "...а　Дьявол　смилуется.",
+]
+# text = [
+#     "Aquí　estoy.　¿Ya　llegaste?",
+#     "¿Te　refieres　a　este　maldito　agujero?",
+#     "Ahí　es　donde　todos　se　reúnen.",
+#     "Nuestra　información　indica　que　son　catorce.",
+#     "¿Y　todos　están　listos　para　cazar?",
+#     "No,　deja　uno　con　vida",
+#     "para　preguntarle",
+#     "quién　es　su　jefe.",
+#     "¿Algo　más　que　deba　saber?",
+#     "Na,　en　realidad　no.　Los　reconocerás　al　verlos,",
+#     "son,　eh,　diferentes.",
+#     "De　acuerdo.",
+#     "Que　el　Señor　sonría...",
+#     "...y　el　Diablo　tenga　piedad."
+# ]
+text_flatten = "".join(text)
+ctl2char_lookup, char2ctl_lookup, unique_chars = atlasGeneration.char_register(text_flatten)
+
+canvas, fontParams = atlasGeneration.gen_atlas_US(
+    FONT_PATH, unique_chars, CHAR_HEIGHT, FONT_SIZE, SCALE_FACTOR,
+    debug=False
+)
+canvas.save(filename='atlas.png')
+
+command = [
+    "texconv.exe",
+    "-f", "BC7_UNORM_SRGB",
+    "-ft", "dds",
+    "-srgb",
+    "-m", "1",
+    "-y",
+    "atlas.png",
+]
+import subprocess
+subprocess.run(command, check=True)
+
+jmb.fParams = fontParams
+assert len(text) == jmb.meta.sentence_num
+for idx, jmk in enumerate(jmb.sentences):
+    text_sentence = text[idx]
+    text_codes = [char2ctl_lookup[c] for c in text_sentence]
+    jmk.overwrite_ctl(text_codes)
+jmb.reimport_tex("atlas.dds")
+jmb.recalculate_meta()
+
+jmb.write_to_file("00010101.jmb")
 ```
 
 ## BIN files
